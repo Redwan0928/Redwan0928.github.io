@@ -9,7 +9,9 @@
       height: 100%;
       margin: 0;
       background: black;
+      -webkit-tap-highlight-color: transparent;
     }
+
     /* Make the iframe fill the viewport (covers 1920x1080 and scales responsively) */
     iframe#videoFrame {
       position: fixed;
@@ -18,18 +20,88 @@
       width: 100%;
       height: 100%;
       border: 0;
+      background: black; /* fallback */
     }
+
+    /* Black thumbnail overlay that sits on top of the iframe until the user taps */
+    #overlay {
+      position: fixed;
+      inset: 0; /* top:0; right:0; bottom:0; left:0 */
+      background: #000; /* solid black thumbnail */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      cursor: pointer;
+      color: #fff;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    #playBtn {
+      background: rgba(255,255,255,0.06);
+      padding: 14px 22px;
+      border-radius: 10px;
+      backdrop-filter: blur(4px);
+      font-size: 18px;
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    /* Simple play triangle */
+    .triangle {
+      width: 0;
+      height: 0;
+      border-left: 12px solid #fff;
+      border-top: 8px solid transparent;
+      border-bottom: 8px solid transparent;
+      margin-left: 4px;
+    }
+
   </style>
 </head>
 <body>
+  <!-- Overlay shows a black thumbnail until the user taps. This ensures the initial view is solid black. -->
+  <div id="overlay" role="button" aria-label="Tap to play video with sound">
+    <div id="playBtn">
+      <span>Tap to play with sound</span>
+      <span class="triangle" aria-hidden="true"></span>
+    </div>
+  </div>
+
   <iframe
     id="videoFrame"
-    src="//player.bilibili.com/player.html?isOutside=true&aid=80433022&bvid=BV1GJ411x7h7&cid=137649199&p=1"
+    src=""
     width="1920"
     height="1080"
     scrolling="no"
     frameborder="0"
-    allowfullscreen>
+    allow="autoplay; fullscreen"
+    title="Bilibili player">
   </iframe>
+
+  <script>
+    // Player URL (use https). We don't set src until user taps so the overlay acts as a black thumbnail.
+    const baseSrc = 'https://player.bilibili.com/player.html?isOutside=true&aid=80433022&bvid=BV1GJ411x7h7&cid=137649199&p=1';
+
+    const overlay = document.getElementById('overlay');
+    const iframe = document.getElementById('videoFrame');
+
+    // When the user taps/clicks the overlay we set the iframe src including autoplay=1.
+    // The user gesture allows playing with audio on most mobile browsers.
+    overlay.addEventListener('click', function () {
+      // Add provider-dependent autoplay parameter. If the provider requires a different
+      // param or postMessage API, adapt accordingly.
+      iframe.src = baseSrc + '&autoplay=1';
+      overlay.style.display = 'none';
+      // optional: focus the iframe
+      try { iframe.focus(); } catch (e) { /* ignore */ }
+    }, { once: true, passive: true });
+
+    // If you ever want to keep a persistent black thumbnail even after loading,
+    // you can leave the overlay visible and simply unhide the iframe when ready.
+  </script>
 </body>
 </html>
